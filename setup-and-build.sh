@@ -45,7 +45,9 @@ build_in_docker() {
 	OUTPUT_FILE=$LOCAL_DIR/workdir/fedora/initrd.img
 	# On Debian systemd-cryptsetup and systemd-cryptenroll are installed by our config. We do not need cryptsetup itself or verity setup, as there are ways
 	# to verify that (see examples in one of the commits related to the GRUB config, on the main project that uses this ramdisk builder)
-	sudo dracut --force 	--no-hostonly --no-kernel $OUTPUT_FILE && sudo chmod a+rw $OUTPUT_FILE
+	MORE_INSTALLS="--install $(which systemd-cryptenroll)"
+	MORE_INCLUDES=""
+	sudo dracut --force --no-hostonly --no-kernel $MORE_INSTALLS $MORE_INCLUDES $OUTPUT_FILE && sudo chmod a+rw $OUTPUT_FILE
 }
 
 setup_native_use_docker() {
