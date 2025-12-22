@@ -5,7 +5,7 @@ RUN dnf update -y && \
     dnf clean all
 
 
-COPY etc/dracut.conf.d/ /etc/dracut.conf.d/
+COPY targetfiles/ /
 COPY /workdir/fedora/build.sh /host/build.sh
 
 WORKDIR /host
