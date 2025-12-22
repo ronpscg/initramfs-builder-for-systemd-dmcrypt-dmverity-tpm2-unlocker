@@ -32,8 +32,7 @@ check_yocto() {
 
 setup_in_docker() {
 	set -euo pipefail
-	echo "[+] Setting up dracut natively. Copying the required configuration files to /etc/dracut."
-	sudo cp -a ./etc/dracut.conf.d/* /etc/dracut.conf.d/
+	sudo cp -a targetfiles/* /
 }
 
 build_in_docker() {
@@ -47,11 +46,12 @@ build_in_docker() {
 	# to verify that (see examples in one of the commits related to the GRUB config, on the main project that uses this ramdisk builder)
 	MORE_INSTALLS="--install $(which systemd-cryptenroll)"
 	MORE_INCLUDES=""
-	sudo dracut --force --no-hostonly --no-kernel $MORE_INSTALLS $MORE_INCLUDES $OUTPUT_FILE && sudo chmod a+rw $OUTPUT_FILE
+	MORE_ADDS="--add tpm-auto-enrollment"
+	sudo dracut --force --no-hostonly --no-kernel $MORE_INSTALLS $MORE_INCLUDES $MORE_ADDS $OUTPUT_FILE && sudo chmod a+rw $OUTPUT_FILE
 }
 
 setup_native_use_docker() {
-	docker build -t ${DOCKER_IMAGE} -f Dockerfile.fedora .
+	docker build --no-cache -t ${DOCKER_IMAGE} -f Dockerfile.fedora .
 }
 
 build_native_use_docker() {

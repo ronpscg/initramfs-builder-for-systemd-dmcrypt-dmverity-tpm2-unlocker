@@ -1,0 +1,27 @@
+[Unit]
+Description=TPM Auto-Enrollment script for initramfs
+DefaultDependencies=no
+
+# The Before ordering don't matter, as we added a drop in service
+# The After is useful if the WantedBy target is before udev
+After=systemd-udev-settle.service
+
+# Despite the drop in service, it is important to set the order. This ensures we run before the cryptsetup target
+Before=cryptsetup-pre.target
+Before=systemd-cryptsetup@dmcryptdevice-luks.service
+#Before=systemd-cryptsetup@dmcryptdevice\x2dluks.service
+##-# Critical: Ensure this service is 'required' by the target
+##-# so the target won't reach 'active' until this finishes
+#Conflicts=shutdown.target
+
+ConditionPathExists=/dev/tpmrm0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tpm-auto-enrollment.sh
+RemainAfterExit=yes
+
+# The installation doesn't really matter, as we populate it in dracut
+[Install]
+WantedBy=tpm2.target
+

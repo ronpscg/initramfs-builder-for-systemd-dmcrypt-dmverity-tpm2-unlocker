@@ -3,21 +3,20 @@ OUTPUT_FILE=$PWD/initrd.img
 
 : ${MORE_INCLUDES=""}
 : ${MORE_INSTALLS=""}
+: ${MORE_ADDS=""}
 
-if [ "$(grep ^ID= /etc/os-release  | cut -d= -f2)" = "fedora" ] ; then
-	# The idea is to allow auto enrollment also from initramfs (if one wishes to do so, via initramfs hooks that run *before* the typical systemd-cryptgenerator et. al services)
-	echo "Adding systemd-cryptenroll for Fedora" 
-	MORE_INSTALLS="--install $(which systemd-cryptenroll)"
-	MORE_INSTALLS+=" --install $(which cryptsetup)"
-	MORE_INSTALLS+=" --install $(which mktemp)"
+distro_id="$(grep ^ID= /etc/os-release  | cut -d= -f2)"
+echo "Adding systemd-cryptenroll for $distro_id built initramfs" 
 
-	MORE_INCLUDES="$MORE_INCLUDES --include $PWD/dracut-hooks/tpm-auto-enrollment.sh /usr/lib/dracut/hooks/initqueue/001-tpm-auto-enrollment.sh "
+MORE_ADDS+=" --add tpm-auto-enrollment"
 
-fi
-
-dracut --force \
+dracut  --force \
 	--no-hostonly 	\
 	--no-kernel 	\
 	$MORE_INSTALLS 	\
 	$MORE_INCLUDES 	\
+	$MORE_ADDS \
 	$OUTPUT_FILE
+
+exit $rc
+
