@@ -51,7 +51,7 @@ build_in_docker() {
 }
 
 setup_native_use_docker() {
-	docker build --no-cache -t ${DOCKER_IMAGE} -f Dockerfile.fedora .
+	docker build --build-arg CACHEBUST=$(date +%s) -t ${DOCKER_IMAGE} -f Dockerfile.fedora .
 }
 
 build_native_use_docker() {

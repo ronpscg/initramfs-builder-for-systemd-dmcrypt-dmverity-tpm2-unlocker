@@ -4,7 +4,8 @@ RUN dnf update -y && \
     dnf install -y systemd cryptsetup tpm2-tss && \
     dnf clean all
 
-
+# Don't fight with Docker correctness. Give a date +%s argument from the outside, and always recopy
+ARG CACHEBUST=1
 COPY targetfiles/ /
 
 WORKDIR /host
