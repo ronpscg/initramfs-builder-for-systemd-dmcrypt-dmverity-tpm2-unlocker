@@ -44,9 +44,16 @@ build_in_docker() {
 	OUTPUT_FILE=$LOCAL_DIR/workdir/fedora/initrd.img
 	# On Debian systemd-cryptsetup and systemd-cryptenroll are installed by our config. We do not need cryptsetup itself or verity setup, as there are ways
 	# to verify that (see examples in one of the commits related to the GRUB config, on the main project that uses this ramdisk builder)
-	MORE_INSTALLS="--install $(which systemd-cryptenroll)"
+	MORE_INSTALLS="--install grep --install cut --install tr"
 	MORE_INCLUDES=""
-	MORE_ADDS="--add tpm-auto-enrollment"
+	MORE_ADDS="--add tpm-auto-enrollment --add base"
+	distro_id="$(grep ^ID= /etc/os-release  | cut -d= -f2)"
+	if [ ! "$distro_id" = "fedora" ] ; then
+		# Dracut on Ubuntu does not provide grep (there was a reason why I started with a Fedora docker from the get go, it brings the "best" dracut experience)
+		# So install some basic things that are needed in the script use for auto-enrollment
+		MORE_INSTALLS="--install grep --install cut --install tr"
+	fi
+	echo "Building dracut locally on $distro_id"
 	sudo dracut --force --no-hostonly --no-kernel $MORE_INSTALLS $MORE_INCLUDES $MORE_ADDS $OUTPUT_FILE && sudo chmod a+rw $OUTPUT_FILE
 }
 
