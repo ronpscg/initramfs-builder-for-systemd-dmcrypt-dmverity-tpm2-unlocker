@@ -70,9 +70,39 @@ build_native_use_docker() {
 	fi
 }
 
+setup_native_use_docker_no_bind_mounts() {
+	docker build --build-arg CACHEBUST=$(date +%s) -t ${DOCKER_IMAGE} -f Dockerfile.fedora.no-bind-mounts .
+}
+
+build_native_use_docker_no_bind_mounts() {
+	dockername=docker-no-bind-mounts-initramfs-builder
+	initrd_artifact="$PWD/workdir/fedora/initrd.img"
+	DOCKER_RUN_CMD="docker run --name $dockername --rm -d  -w /host ${DOCKER_IMAGE}"
+	if [ $(docker ps -f name=$dockername | wc -l) -gt 1 ] ; then
+		bbwarn "Killing previous dockers: $(docker ps -f name=$dockername)"
+		docker stop $dockername # this could take a while but it is more reliable then killing and continuing directly
+	fi
+
+	$DOCKER_RUN_CMD /bin/bash -c "while true ; do sleep 1000 ; done"
+	if docker exec -i $dockername bash -c "./build.sh && chmod a+rw /host/initrd.img" ; then
+		if docker cp $dockername:/host/initrd.img $initrd_artifact ; then
+			echo -e "\e[32mBuilt initramfs successfully.  $(md5sum $initrd_artifact)\e[0m"
+			docker kill $dockername
+		else
+			docker kill $dockername
+			echo -e "\e[31mFailed to copy the file\e[0m" ; exit 1
+		fi
+	else
+		docker kill $dockername
+		echo -e "\e[31mFailed to create initramfs\e[0m" ; exit 1
+	fi
+}
+
 setup() {
 	if [ "$IN_DOCKER" = "false" ] ; then
 		setup_native_use_docker
+	elif [ "$(lsb_release -rs)" = "22.04" ] ; then
+		setup_native_use_docker_no_bind_mounts
 	else
 		setup_in_docker
 	fi
@@ -81,6 +111,8 @@ setup() {
 build() {
 	if [ "$IN_DOCKER" = "false" ] ; then
 		build_native_use_docker
+	elif [ "$(lsb_release -rs)" = "22.04" ] ; then
+		build_native_use_docker_no_bind_mounts
 	else
 		build_in_docker
 	fi
